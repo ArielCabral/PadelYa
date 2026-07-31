@@ -12,6 +12,10 @@ export default function App() {
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
   const [generoFiltro, setGeneroFiltro] = useState('Todos');
   const [modalAbierto, setModalAbierto] = useState(false);
+  
+  // Estado para el botón de instalar PWA
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [mostrarBotonInstalar, setMostrarBotonInstalar] = useState(false);
 
   // Formulario para nuevo partido
   const [nuevoPartido, setNuevoPartido] = useState({
@@ -26,7 +30,7 @@ export default function App() {
     telefono: ''
   });
 
-  // Cargar partidos desde Supabase
+  // Cargar partidos y escuchar evento de instalación PWA
   useEffect(() => {
     obtenerPartidos();
 
@@ -40,10 +44,30 @@ export default function App() {
       })
       .subscribe();
 
+    // Capturar evento para instalación de la app
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setMostrarBotonInstalar(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
     return () => {
       supabase.removeChannel(canal);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setMostrarBotonInstalar(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   const obtenerPartidos = async () => {
     try {
@@ -133,9 +157,7 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-emerald-500 text-slate-950 p-2 rounded-xl font-bold flex items-center justify-center">
-              🎾
-            </div>
+            <img src="/favicon.svg" alt="PadelYa Logo" className="w-9 h-9 rounded-xl" />
             <div>
               <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
                 PadelYa
@@ -143,12 +165,25 @@ export default function App() {
               <p className="text-xs text-slate-400">Comunidad de Pádel</p>
             </div>
           </div>
-          <button 
-            onClick={() => setModalAbierto(true)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-sm shadow-lg shadow-emerald-500/20 active:scale-95"
-          >
-            <Plus className="w-4 h-4" /> Publicar
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {/* Botón de Instalar App visible si el navegador lo permite */}
+            {mostrarBotonInstalar && (
+              <button 
+                onClick={handleInstallClick}
+                className="bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all text-xs active:scale-95"
+              >
+                <Download className="w-4 h-4" /> Instalar App
+              </button>
+            )}
+
+            <button 
+              onClick={() => setModalAbierto(true)}
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-sm shadow-lg shadow-emerald-500/20 active:scale-95"
+            >
+              <Plus className="w-4 h-4" /> Publicar
+            </button>
+          </div>
         </div>
       </header>
 
@@ -364,7 +399,7 @@ export default function App() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Zona / Localidad</label>
+                <label className="text-xs text-slate-400 block np-1">Zona / Localidad</label>
                 <input 
                   type="text" 
                   placeholder="Ej: Belgrano, CABA" 
