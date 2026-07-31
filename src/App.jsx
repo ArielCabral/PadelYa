@@ -10,6 +10,7 @@ export default function App() {
   const [partidos, setPartidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
+  const [generoFiltro, setGeneroFiltro] = useState('Todos');
   const [modalAbierto, setModalAbierto] = useState(false);
 
   // Formulario para nuevo partido
@@ -21,6 +22,7 @@ export default function App() {
     zona: '',
     faltan: 1,
     posicion: 'Indistinto',
+    genero: 'Indistinto',
     telefono: ''
   });
 
@@ -74,7 +76,6 @@ export default function App() {
 
       if (error) throw error;
 
-      // Actualizamos el estado local
       setPartidos(prev => prev.filter(p => p.id !== id));
       alert("La búsqueda ha sido dada de baja.");
     } catch (error: any) {
@@ -108,20 +109,24 @@ export default function App() {
         zona: '',
         faltan: 1,
         posicion: 'Indistinto',
+        genero: 'Indistinto',
         telefono: ''
       });
       alert('¡Partido publicado con éxito!');
-      obtenerPartidos(); // Refrescar lista
+      obtenerPartidos();
     } catch (error: any) {
       alert('Error al publicar el partido: ' + error.message);
     }
   };
 
-  // Filtrar partidos
+  // Filtrar partidos por categoría y género
   const partidosFiltrados = useMemo(() => {
-    if (categoriaFiltro === 'Todas') return partidos;
-    return partidos.filter((p: any) => p.categoria === categoriaFiltro);
-  }, [partidos, categoriaFiltro]);
+    return partidos.filter((p: any) => {
+      const cumpleCategoria = categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro;
+      const cumpleGenero = generoFiltro === 'Todos' || p.genero === generoFiltro || !p.genero || p.genero === 'Indistinto';
+      return cumpleCategoria && cumpleGenero;
+    });
+  }, [partidos, categoriaFiltro, generoFiltro]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
@@ -150,21 +155,40 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
         {/* Filtros de Categoría */}
-        <section className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {['Todas', '3°', '4°', '5°', '6°', '7°', '8°'].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoriaFiltro(cat)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
-                categoriaFiltro === cat 
-                  ? 'bg-emerald-500 text-slate-950' 
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              Cat. {cat}
-            </button>
-          ))}
-        </section>
+        <div className="space-y-3">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {['Todas', '3°', '4°', '5°', '6°', '7°', '8°'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoriaFiltro(cat)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
+                  categoriaFiltro === cat 
+                    ? 'bg-emerald-500 text-slate-950' 
+                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                Cat. {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Filtros de Género */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {['Todos', 'Hombre', 'Mujer', 'Mixto'].map((gen) => (
+              <button
+                key={gen}
+                onClick={() => setGeneroFiltro(gen)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  generoFiltro === gen 
+                    ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' 
+                    : 'bg-slate-900/60 text-slate-400 border border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                {gen === 'Todos' ? '👫 Todos los géneros' : gen === 'Hombre' ? '🙋‍♂️ Buscan Hombre' : gen === 'Mujer' ? '🙋‍♀️ Buscan Mujer' : '🔀 Mixto'}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Lista de partidos */}
         <section className="space-y-4">
@@ -175,7 +199,7 @@ export default function App() {
             </div>
           ) : partidosFiltrados.length === 0 ? (
             <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800/80 p-8">
-              <p className="text-slate-400 font-medium">No hay partidos publicados en esta categoría.</p>
+              <p className="text-slate-400 font-medium">No hay partidos con estos filtros.</p>
               <button 
                 onClick={() => setModalAbierto(true)}
                 className="mt-4 text-emerald-400 hover:underline text-sm font-semibold"
@@ -190,9 +214,14 @@ export default function App() {
                 className="bg-slate-900 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 transition-all shadow-xl space-y-4"
               >
                 <div className="flex justify-between items-center">
-                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs px-3 py-1 rounded-full">
-                    Cat. {partido.categoria}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs px-3 py-1 rounded-full">
+                      Cat. {partido.categoria}
+                    </span>
+                    <span className="bg-slate-800 text-slate-300 border border-slate-700 text-xs px-2.5 py-1 rounded-full font-medium">
+                      {partido.genero === 'Hombre' ? '🙋‍♂️ Hombre' : partido.genero === 'Mujer' ? '🙋‍♀️ Mujer' : partido.genero === 'Mixto' ? '🔀 Mixto' : '👫 Indistinto'}
+                    </span>
+                  </div>
                   
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-400 flex items-center gap-1">
@@ -275,6 +304,34 @@ export default function App() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="text-xs text-slate-400 block mb-1">¿Qué buscan?</label>
+                  <select 
+                    value={nuevoPartido.genero}
+                    onChange={e => setNuevoPartido({...nuevoPartido, genero: e.target.value})}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+                  >
+                    <option value="Indistinto">Indistinto / Cualquiera</option>
+                    <option value="Hombre">Hombre</option>
+                    <option value="Mujer">Mujer</option>
+                    <option value="Mixto">Mixto</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Lado / Posición</label>
+                  <select 
+                    value={nuevoPartido.posicion}
+                    onChange={e => setNuevoPartido({...nuevoPartido, posicion: e.target.value})}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+                  >
+                    <option value="Indistinto">Indistinto</option>
+                    <option value="Drive">Drive</option>
+                    <option value="Revés">Revés</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="text-xs text-slate-400 block mb-1">Día</label>
                   <input 
                     type="text" 
@@ -316,19 +373,6 @@ export default function App() {
                   onChange={e => setNuevoPartido({...nuevoPartido, zona: e.target.value})}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
                 />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Lado / Posición buscada</label>
-                <select 
-                  value={nuevoPartido.posicion}
-                  onChange={e => setNuevoPartido({...nuevoPartido, posicion: e.target.value})}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
-                >
-                  <option value="Indistinto">Indistinto</option>
-                  <option value="Drive">Drive</option>
-                  <option value="Revés">Revés</option>
-                </select>
               </div>
 
               <div>
