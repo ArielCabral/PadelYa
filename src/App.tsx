@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Trophy, Users, Calendar, MapPin, Clock, Plus, Search, Filter, 
   MessageCircle, User, Sparkles, X, ThumbsUp, Flame, CircleDot, 
-  Bot, Send, Loader2, Wand2, BrainCircuit, Share2, Bell, Download, Trash2
+  Bot, Send, Loader2, Wand2, BrainCircuit, Share2, Bell, Smartphone, Trash2
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -13,11 +13,8 @@ export default function App() {
   const [generoFiltro, setGeneroFiltro] = useState('Todos');
   const [modalAbierto, setModalAbierto] = useState(false);
   
-  // Estado para el botón de instalar PWA
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [mostrarBotonInstalar, setMostrarBotonInstalar] = useState(false);
 
-  // Formulario para nuevo partido
   const [nuevoPartido, setNuevoPartido] = useState({
     categoria: '6°',
     fecha: 'Hoy',
@@ -30,7 +27,6 @@ export default function App() {
     telefono: ''
   });
 
-  // Cargar partidos y escuchar evento de instalación PWA
   useEffect(() => {
     obtenerPartidos();
 
@@ -44,11 +40,9 @@ export default function App() {
       })
       .subscribe();
 
-    // Capturar evento para instalación de la app
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setMostrarBotonInstalar(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -60,13 +54,15 @@ export default function App() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setMostrarBotonInstalar(false);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("Para instalar la app:\n\n• En Celular (Chrome/Safari): Toca los 3 puntitos o el menú Compartir y selecciona 'Agregar a la pantalla de inicio'.\n• En PC (Chrome): Haz clic en el icono de instalación ubicado en la barra de direcciones superior derecha.");
     }
-    setDeferredPrompt(null);
   };
 
   const obtenerPartidos = async () => {
@@ -86,7 +82,6 @@ export default function App() {
     }
   };
 
-  // Dar de baja / Eliminar partido
   const handleDeleteMatch = async (id) => {
     const confirmDelete = window.confirm("¿Ya conseguiste compañero o deseas dar de baja esta búsqueda?");
     if (!confirmDelete) return;
@@ -103,11 +98,9 @@ export default function App() {
       alert("La búsqueda ha sido dada de baja correctamente.");
     } catch (error) {
       alert("Error al eliminar la publicación: " + error.message);
-      console.error(error);
     }
   };
 
-  // Publicar partido
   const handleCrearPartido = async (e) => {
     e.preventDefault();
     if (!nuevoPartido.club || !nuevoPartido.telefono) {
@@ -142,7 +135,6 @@ export default function App() {
     }
   };
 
-  // Filtrar partidos
   const partidosFiltrados = useMemo(() => {
     return partidos.filter((p) => {
       const cumpleCategoria = categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro;
@@ -157,7 +149,9 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="PadelYa Logo" className="w-9 h-9 rounded-xl" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20 border border-emerald-400/30">
+              <Trophy className="w-5 h-5 text-slate-950" />
+            </div>
             <div>
               <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
                 PadelYa
@@ -167,16 +161,16 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Botón de Instalar App visible si el navegador lo permite */}
-            {mostrarBotonInstalar && (
-              <button 
-                onClick={handleInstallClick}
-                className="bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all text-xs active:scale-95"
-              >
-                <Download className="w-4 h-4" /> Instalar App
-              </button>
-            )}
+            {/* Botón de Instalar App */}
+            <button 
+              onClick={handleInstallClick}
+              className="bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all text-xs active:scale-95"
+            >
+              <Smartphone className="w-4 h-4" /> 
+              <span>Instalar App</span>
+            </button>
 
+            {/* Botón Publicar */}
             <button 
               onClick={() => setModalAbierto(true)}
               className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-sm shadow-lg shadow-emerald-500/20 active:scale-95"
@@ -261,7 +255,6 @@ export default function App() {
                       <Clock className="w-3.5 h-3.5" /> {partido.fecha} - {partido.hora} hs
                     </span>
 
-                    {/* Botón para Dar de Baja */}
                     <button
                       onClick={() => handleDeleteMatch(partido.id)}
                       className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 p-1.5 rounded-lg transition-all text-xs flex items-center gap-1"
@@ -399,10 +392,10 @@ export default function App() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 block np-1">Zona / Localidad</label>
+                <label className="text-xs text-slate-400 block mb-1">Zona / Localidad</label>
                 <input 
                   type="text" 
-                  placeholder="Ej: Belgrano, CABA" 
+                  placeholder="Ej: Pádel Pro Central" 
                   value={nuevoPartido.zona}
                   onChange={e => setNuevoPartido({...nuevoPartido, zona: e.target.value})}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
