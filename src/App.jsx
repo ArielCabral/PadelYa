@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Trophy, Users, Calendar, MapPin, Clock, Plus, Search, Filter, 
   MessageCircle, User, Sparkles, X, ThumbsUp, Flame, CircleDot, 
-  Bot, Send, Loader2, Wand2, BrainCircuit, Share2, Bell, Download 
+  Bot, Send, Loader2, Wand2, BrainCircuit, Share2, Bell, Download, Trash2
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -34,6 +34,9 @@ export default function App() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'partidos' }, payload => {
         setPartidos(prev => [payload.new, ...prev]);
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'partidos' }, payload => {
+        setPartidos(prev => prev.filter(p => p.id !== payload.old.id));
+      })
       .subscribe();
 
     return () => {
@@ -51,15 +54,37 @@ export default function App() {
 
       if (error) throw error;
       if (data) setPartidos(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al cargar partidos:', error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Publicar partido en Supabase
-  const handleCrearPartido = async (e) => {
+  // 2. Dar de baja / Eliminar partido de Supabase
+  const handleDeleteMatch = async (id: string | number) => {
+    const confirmDelete = window.confirm("¿Seguro que quieres dar de baja esta búsqueda?");
+    if (!confirmDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('partidos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Actualizamos el estado local
+      setPartidos(prev => prev.filter(p => p.id !== id));
+      alert("La búsqueda ha sido dada de baja.");
+    } catch (error: any) {
+      alert("Error al eliminar la publicación: " + error.message);
+      console.error(error);
+    }
+  };
+
+  // 3. Publicar partido en Supabase
+  const handleCrearPartido = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevoPartido.club || !nuevoPartido.telefono) {
       alert('Por favor completa el club y tu teléfono de WhatsApp.');
@@ -86,7 +111,8 @@ export default function App() {
         telefono: ''
       });
       alert('¡Partido publicado con éxito!');
-    } catch (error) {
+      obtenerPartidos(); // Refrescar lista
+    } catch (error: any) {
       alert('Error al publicar el partido: ' + error.message);
     }
   };
@@ -94,7 +120,7 @@ export default function App() {
   // Filtrar partidos
   const partidosFiltrados = useMemo(() => {
     if (categoriaFiltro === 'Todas') return partidos;
-    return partidos.filter(p => p.categoria === categoriaFiltro);
+    return partidos.filter((p: any) => p.categoria === categoriaFiltro);
   }, [partidos, categoriaFiltro]);
 
   return (
@@ -158,18 +184,30 @@ export default function App() {
               </button>
             </div>
           ) : (
-            partidosFiltrados.map((partido) => (
+            partidosFiltrados.map((partido: any) => (
               <div 
                 key={partido.id} 
                 className="bg-slate-900 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 transition-all shadow-xl space-y-4"
               >
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center">
                   <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs px-3 py-1 rounded-full">
                     Cat. {partido.categoria}
                   </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> {partido.fecha} - {partido.hora} hs
-                  </span>
+                  
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> {partido.fecha} - {partido.hora} hs
+                    </span>
+
+                    {/* Botón para dar de baja */}
+                    <button
+                      onClick={() => handleDeleteMatch(partido.id)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1.5 rounded-lg transition-all text-xs flex items-center gap-1"
+                      title="Dar de baja esta búsqueda"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
