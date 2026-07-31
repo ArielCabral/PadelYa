@@ -26,11 +26,10 @@ export default function App() {
     telefono: ''
   });
 
-  // 1. Cargar partidos desde Supabase al iniciar
+  // Cargar partidos desde Supabase
   useEffect(() => {
     obtenerPartidos();
 
-    // Escuchar cambios en tiempo real
     const canal = supabase
       .channel('partidos_realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'partidos' }, payload => {
@@ -56,16 +55,16 @@ export default function App() {
 
       if (error) throw error;
       if (data) setPartidos(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al cargar partidos:', error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Dar de baja / Eliminar partido de Supabase
-  const handleDeleteMatch = async (id: string | number) => {
-    const confirmDelete = window.confirm("¿Seguro que quieres dar de baja esta búsqueda?");
+  // Dar de baja / Eliminar partido
+  const handleDeleteMatch = async (id) => {
+    const confirmDelete = window.confirm("¿Ya conseguiste compañero o deseas dar de baja esta búsqueda?");
     if (!confirmDelete) return;
 
     try {
@@ -77,15 +76,15 @@ export default function App() {
       if (error) throw error;
 
       setPartidos(prev => prev.filter(p => p.id !== id));
-      alert("La búsqueda ha sido dada de baja.");
-    } catch (error: any) {
+      alert("La búsqueda ha sido dada de baja correctamente.");
+    } catch (error) {
       alert("Error al eliminar la publicación: " + error.message);
       console.error(error);
     }
   };
 
-  // 3. Publicar partido en Supabase
-  const handleCrearPartido = async (e: React.FormEvent) => {
+  // Publicar partido
+  const handleCrearPartido = async (e) => {
     e.preventDefault();
     if (!nuevoPartido.club || !nuevoPartido.telefono) {
       alert('Por favor completa el club y tu teléfono de WhatsApp.');
@@ -114,14 +113,14 @@ export default function App() {
       });
       alert('¡Partido publicado con éxito!');
       obtenerPartidos();
-    } catch (error: any) {
+    } catch (error) {
       alert('Error al publicar el partido: ' + error.message);
     }
   };
 
-  // Filtrar partidos por categoría y género
+  // Filtrar partidos
   const partidosFiltrados = useMemo(() => {
-    return partidos.filter((p: any) => {
+    return partidos.filter((p) => {
       const cumpleCategoria = categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro;
       const cumpleGenero = generoFiltro === 'Todos' || p.genero === generoFiltro || !p.genero || p.genero === 'Indistinto';
       return cumpleCategoria && cumpleGenero;
@@ -154,7 +153,7 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
-        {/* Filtros de Categoría */}
+        {/* Filtros */}
         <div className="space-y-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {['Todas', '3°', '4°', '5°', '6°', '7°', '8°'].map((cat) => (
@@ -172,7 +171,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* Filtros de Género */}
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {['Todos', 'Hombre', 'Mujer', 'Mixto'].map((gen) => (
               <button
@@ -184,7 +182,7 @@ export default function App() {
                     : 'bg-slate-900/60 text-slate-400 border border-slate-800 hover:border-slate-700'
                 }`}
               >
-                {gen === 'Todos' ? '👫 Todos los géneros' : gen === 'Hombre' ? '🙋‍♂️ Buscan Hombre' : gen === 'Mujer' ? '🙋‍♀️ Buscan Mujer' : '🔀 Mixto'}
+                {gen === 'Todos' ? '👫 Todos' : gen === 'Hombre' ? '🙋‍♂️ Hombre' : gen === 'Mujer' ? '🙋‍♀️ Mujer' : '🔀 Mixto'}
               </button>
             ))}
           </div>
@@ -195,20 +193,20 @@ export default function App() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-500 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-              <p>Cargando partidos en tiempo real...</p>
+              <p>Cargando partidos...</p>
             </div>
           ) : partidosFiltrados.length === 0 ? (
             <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800/80 p-8">
-              <p className="text-slate-400 font-medium">No hay partidos con estos filtros.</p>
+              <p className="text-slate-400 font-medium">No hay partidos publicados con estos filtros.</p>
               <button 
                 onClick={() => setModalAbierto(true)}
                 className="mt-4 text-emerald-400 hover:underline text-sm font-semibold"
               >
-                ¡Sé el primero en armar uno!
+                ¡Publica uno ahora!
               </button>
             </div>
           ) : (
-            partidosFiltrados.map((partido: any) => (
+            partidosFiltrados.map((partido) => (
               <div 
                 key={partido.id} 
                 className="bg-slate-900 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 transition-all shadow-xl space-y-4"
@@ -228,13 +226,14 @@ export default function App() {
                       <Clock className="w-3.5 h-3.5" /> {partido.fecha} - {partido.hora} hs
                     </span>
 
-                    {/* Botón para dar de baja */}
+                    {/* Botón para Dar de Baja */}
                     <button
                       onClick={() => handleDeleteMatch(partido.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1.5 rounded-lg transition-all text-xs flex items-center gap-1"
-                      title="Dar de baja esta búsqueda"
+                      className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 p-1.5 rounded-lg transition-all text-xs flex items-center gap-1"
+                      title="Dar de baja / Ya conseguí"
                     >
                       <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Dar de baja</span>
                     </button>
                   </div>
                 </div>
@@ -265,7 +264,7 @@ export default function App() {
         </section>
       </main>
 
-      {/* Modal para crear partido */}
+      {/* Modal para publicar */}
       {modalAbierto && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 relative shadow-2xl">
