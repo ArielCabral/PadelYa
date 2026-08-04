@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+
+  <defs>
+
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+
+      <stop offset="0%" stop-color="#0b1329" />
+
+      <stop offset="100%" stop-color="#020617" />
+
+    </linearGradient>
+
+    <linearGradient id="pala1" x1="0%" y1="0%" x2="100%" y2="100%">
+
+      <stop offset="0%" stop-color="#10b981" />
+
+      <stop offset="100%" stop-color="#047857" />
+
+    </linearGradient>
+
+    <linearGradient id="pala2" x1="0%" y1="0%" x2="100%" y2="100%">
+
+      <stop offset="0%" stop-color="#06b6d4" />
+
+      <stop offset="100%" stop-color="#0e7490" />
+
+    </linearGradient>
+
+  </defs>
+
+
+
+  <rect width="512" height="512" rx="128" fill="url(#bg3)" />
+
+
+
+  <!-- Paleta 1 (Verde) -->
+
+  <g transform="translate(256, 256) rotate(-30) translate(-256, -256)">
+
+    <rect x="206" y="100" width="100" height="140" rx="50" fill="url(#pala1)" />
+
+    <rect x="244" y="235" width="24" height="90" rx="8" fill="#047857" />
+
+    <circle cx="236" cy="150" r="6" fill="#a7f3d0" />
+
+    <circle cx="276" cy="150" r="6" fill="#a7f3d0" />
+
+    <circle cx="256" cy="180" r="6" fill="#a7f3d0" />
+
+  </g>
+
+
+
+  <!-- Paleta 2 (Cian) -->
+
+  <g transform="translate(256, 256) rotate(30) translate(-256, -256)">
+
+    <rect x="206" y="100" width="100" height="140" rx="50" fill="url(#pala2)" opacity="0.9" />
+
+    <rect x="244" y="235" width="24" height="90" rx="8" fill="#0e7490" />
+
+    <circle cx="236" cy="150" r="6" fill="#cff4fc" />
+
+    <circle cx="276" cy="150" r="6" fill="#cff4fc" />
+
+    <circle cx="256" cy="180" r="6" fill="#cff4fc" />
+
+  </g>
+
+
+
+  <!-- Pelota central de impacto -->
+
+  <circle cx="256" cy="180" r="32" fill="#34d399" stroke="#020617" stroke-width="6" />
+
+</svg>
